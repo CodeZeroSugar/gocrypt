@@ -10,8 +10,13 @@ import (
 
 func main() {
 	args := os.Args[1:]
+	if os.Args[1] == "help" || os.Args[1] == "usage" {
+		app.CommandUsage()
+		return
+	}
 	if len(args) != 3 {
 		fmt.Print("\nNot enough arguments provided")
+		app.CommandUsage()
 		return
 	}
 
@@ -20,19 +25,6 @@ func main() {
 	if err != nil {
 		fmt.Print("\nError reading input:", err)
 		return
-	}
-
-	fmt.Print("\nConfirm secret:")
-	confirm, err := term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
-		fmt.Print("\nError reading input:", err)
-		return
-	}
-
-	if string(password) != string(confirm) {
-		fmt.Print("\nConfirmation did not match password")
-		return
-
 	}
 
 	inPath := args[1]
@@ -46,6 +38,18 @@ func main() {
 
 	switch command := args[0]; command {
 	case "encrypt":
+		fmt.Print("\nConfirm secret:")
+		confirm, err := term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			fmt.Print("\nError reading input:", err)
+			return
+		}
+
+		if string(password) != string(confirm) {
+			fmt.Print("\nConfirmation did not match password")
+			return
+
+		}
 
 		encrypted, err := app.CommandEncrypt(data, password)
 		if err != nil {
@@ -60,7 +64,7 @@ func main() {
 			return
 		}
 
-		fmt.Println("Successfully encrypted file:", outPath)
+		fmt.Println("\nSuccessfully encrypted file:", outPath)
 
 	case "decrypt":
 
@@ -76,10 +80,10 @@ func main() {
 			return
 		}
 
-		fmt.Println("Successfully decrypted file:", outPath)
+		fmt.Println("\nSuccessfully decrypted file:", outPath)
 
 	default:
 		fmt.Printf("\n'%s' is not a valid command", command)
-		return
+		app.CommandUsage()
 	}
 }
