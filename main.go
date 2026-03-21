@@ -2,10 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/CodeZeroSugar/gocrypt/internal/app"
+	"github.com/CodeZeroSugar/gocrypt/internal/termfx"
 	"golang.org/x/term"
 )
 
@@ -37,9 +41,12 @@ func main() {
 
 	data, err := os.ReadFile(inPath)
 	if err != nil {
-		fmt.Print("Could not read provided file.")
+		fmt.Print("\nCould not read provided file.")
 		return
 	}
+
+	rand.Seed(time.Now().UnixNano())
+	ctx, cancel := context.WithCancel(context.Background())
 
 	switch command := args[0]; command {
 	case "encrypt":
@@ -56,6 +63,8 @@ func main() {
 
 		}
 
+		go termfx.Scrambler(ctx)
+
 		encrypted, err := app.CommandEncrypt(data, password)
 		if err != nil {
 			fmt.Print("\nFailed to encrypt input:", err)
@@ -69,9 +78,14 @@ func main() {
 			return
 		}
 
+		cancel()
+		fmt.Print("\r\033[K")
 		fmt.Println("\nSuccessfully encrypted file:", outPath)
 
 	case "decrypt":
+
+		fmt.Println("")
+		go termfx.Scrambler(ctx)
 
 		decrypted, err := app.CommandDecrypt(data, password)
 		if err != nil {
@@ -85,6 +99,8 @@ func main() {
 			return
 		}
 
+		cancel()
+		fmt.Print("\r\033[K")
 		fmt.Println("\nSuccessfully decrypted file:", outPath)
 
 	default:
